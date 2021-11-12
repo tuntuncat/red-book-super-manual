@@ -1,0 +1,1101 @@
+---
+description: var/let/const， 数据类型， 流控制语句， 理解函数
+---
+
+# 第3章 语言基础
+
+## 3.1 语法​
+
+任何语言的核心都是语法，操作符，数据类型以及内置功能（built-in functions）。
+
+​ 截至2017年，最新发布的ES6的规范几乎已在所有主流浏览器中实现。
+
+​ 这一节里几个比较有意思的点：
+
+* ES里的标识符可以为字母，下划线， dollar符号，数字（不能以数字开头），字母可以为ASCII或者Unicode字符集里的任意字符（**中文也可！但千万别用**）
+
+```javascript
+const 你好 = 'hello'
+console.log(你好) // hello
+```
+
+* ES5里引入了严格模式，来指明以后ES的发展方向。最佳实践是如果在严格模式里报错，那么建议你在任何时候都不要这么做。
+* 分号不是必须的（尤大曾说过Vue源码里没有一个分号），但是书里的最佳实践是建议你去加分号，有助于提升性能和引擎压缩代码。
+* 控制语句如if在只有一条执行语句的时候可以不加{}, 但是还是强烈建议加。
+* 关键字和保留字除了不能用作标识符，还不能用作属性名。
+
+***
+
+## 3.1.1 变量声明(3)
+
+​ ES里声明的变量是**弱类型**的（不能直接给变量指定类型），跟python一样。
+
+​ 然而在ES6里引入了**let/const**关键字用来填var的坑，从此var可能就要进入历史的长河中了。
+
+​ 另外，在ES里我们最好把**声明和赋值分为独立的两个过程**，有助于理解后面的变量提升，TDZ啥的。
+
+​ 实际上我们声明一个变量时，它的context（上下文）也被保存下来, 换句话说，**变量只有放在特定的上下文中才能唯一确定**。在ES6之前，只有全局上下文和函数上下文。ES6引入了块级上下文，从而解决了以前使用var声明变量时的一些遗留问题。
+
+​ 有时候我们也用**作用域来代指上下文**。
+
+### 1)var
+
+* 声明作用域：全局作用域/函数作用域
+
+```javascript
+var message = 100 // 使用var声明一个全局变量，那么该变量在全局都可以访问
+function print() {
+    const message = 101
+    test = 102 // 如果前面什么都不加，会隐形地声明一个全局变量，迷惑特性1
+    console.log(message) // message变量只能在函数内部被访问，外部访问不到
+}
+```
+
+*   声明提升：即JS引擎在开始执行代码之前，会先解析一遍代码。然后把使用var声明的变量提升到响应的作用域的最上方。所以会造成一些迷惑的现象，例如可以在声明之前就访问到该变量（**虽然该变量只是被声明了还没有被赋值**），而且不会报错，迷惑特性2。
+
+    而且var的提升不受条件限制：
+
+```javascript
+if(false) {
+	var test = 'hello' // 依然会提升到全局顶部
+}
+```
+
+* 允许重复声明。
+* 全局下声明会成为window的属性之一，所以会存在覆盖window本身属性的可能性，迷惑特性3。
+* for循环中的var会造成变量的全局渗透，迷惑特性4
+
+```javascript
+for(var i = 0; i < 10; i++) {
+}
+console.log(i) // 10, 但是我们基本都希望i不要污染我们全局
+for (var i = 0; i < 5; ++i) { 
+ setTimeout(() => console.log(i), 0) 
+} // 5,5,5,5,5
+// 每个callback访问到的都是全局的i
+for (let i = 0; i < 5; ++i) { 
+ setTimeout(() => console.log(i), 0) 
+} // 0,1,2,3,4
+// 使用let让每一次循环都单独产生了一个作用域来生成一个i，并且引擎内部会自动使i增加。
+```
+
+### 2)let/const
+
+* 声明作用域: 块级作用域（实际上可能为全局/函数作用域，现在加上了一切以{}包裹的区域）
+* 不允许重复声明：同一个变量在同一个块级作用域下只能声明一次，并且与var声明的同名变量依然会重复
+* 暂时性死区（TDZ) ：与var不同，用let/const声明的变量在声明前都不允许访问。
+* 不会成为window（global）对象的属性。
+* for循环中每次循环都会单独创建循环变量的作用域，解决了var的变量渗透问题。
+* const声明的变量必须在声明时赋值，并且只能被赋值一次。**所以我们常常把const声明的变量当作当前作用域的“常量”**。
+* const不能用作声明自增变量。
+* const声明的变量如果是引用类型，该对象本身是可以被修改的，只是指向该对象的指针不能被修改。
+
+```javascript
+const obj = {}
+obj = {} // 报错, 因为obj指针重新指向了另一个对象
+```
+
+* **关于var/const/let的最佳实践**
+  * 鉴于var的各种迷惑特性，不使用var。
+  * 能使用const的时候就不要使用let，我们都希望代码的常量多，变量少，这样才利于维护。因为程序员也是人，不小心修改了某常量是很正常的事，**使用const能让我们在debug的时候迅速发现因意外赋值导致的非预期行为**。
+
+***
+
+## 3.1.2 数据类型(3)
+
+​ 总体而言ES6总共有两大类数据类型：**原始类型**和**引用类型**。
+
+​ **原始类型**分为Undefined,Null,Boolean,Number,String,Symbol(ES6)。
+
+​ 大多数编程语言都有Number,String,Boolean,Null4种基本数据类型, 但是JS里有特别的Undefined和Symbol。
+
+> 在书中没有介绍一种特别的内置类型，BigInt。BigInt提供了一种表示大于2\*\*53 - 1的数的方法。bigInt的字面量后面需要加上n。
+>
+> MDN: [https://developer.mozilla.org/zhCN/docs/Web/JavaScript/Reference/Global\_Objects/BigInt](https://github.com/tuntuncat/Red-Book-Super-Manual/blob/main/hong-bao-shu-chao-ji-shou-ce/broken-reference/README.md)
+
+```javascript
+const theBiggestInt = 9007199254740991n;
+
+const alsoHuge = BigInt(9007199254740991);
+// ↪ 9007199254740991n
+
+const hugeString = BigInt("9007199254740991");
+// ↪ 9007199254740991n
+
+const hugeHex = BigInt("0x1fffffffffffff");
+// ↪ 9007199254740991n
+
+const hugeBin = BigInt("0b11111111111111111111111111111111111111111111111111111");
+// ↪ 9007199254740991n
+
+// bigInt支持 + - * / % ** 等运算符，但是只允许跟bigInt相互运算。
+// bigInt如果转换成Number，可能会损失精度
+```
+
+​ **引用类型**实际上只有一种Object, 因为不论是Function，Array还是包装对象Date之类的类型，都是派生于Object。
+
+## 3.1.2.1 数据类型判定(3)
+
+### 1)typeof操作符：
+
+​ 类型判断的基本操作符号：typeof。它会准确返回所有基本类型，但是引用类型就没那么清楚了，比如数组，null。
+
+​ **彩蛋: 全js唯一永不报错的操作符 -- typeof。你甚至可以对未声明的变量使用typeof。**
+
+```javascript
+console.log(typeof Symbol()) // 'symbol'
+console.log(typeof []) // 'object'
+console.log(typeof function(){}) // 'function'
+console.log(typeof null) // 'object', null默认是指向空对象的指针
+```
+
+> 函数是一种特别的对象，所以typeof可以判断函数。
+
+### 2)Object.prototype.toString.call()
+
+该方法会返回字符串''\[object 对象类型]'', 该方法甚至可以返回内置类型。
+
+```javascript
+Object.prototype.toString.call(1) // "[object Number]"
+Object.prototype.toString.call('abc') // "[object String]"
+Object.prototype.toString.call(Symbol()) // "[object Symbol]"
+Object.prototype.toString.call(42n) // "[object BigInt]"
+Object.prototype.toString.call(null) // "[object Null]"
+Object.prototype.toString.call(undefined) // "[object Undefined]"
+Object.prototype.toString.call(true) // "[object Boolean]
+
+// 基于该方法封装一个函数
+function getType(value) {
+    // 使用了正则来匹配返回字符串后面的“对象类型”字串
+    // /[A-Za-z]+/g 优先匹配最长的字母组合
+    // 返回小写的类型
+  return Object.prototype.toString.call(value).match(/[A-Za-z]+/g)[1].toLowerCase()
+}
+getType(123) // 'number' 
+getType(BigInt(2**53)) //'bigint'
+getType([]) // 'array'
+```
+
+### 3)instanceof 关键字
+
+A instance B 返回B的原型是否在A的原型链上，可以通过该方法判断某对象是否由某个构造函数完成。
+
+```javascript
+[1,2,3] instanceof Array  // true
+(function(){}) instanceof Function // true
+({a:5}) instanceof Object // true
+(new Date) instanceof Date // true
+1 instanceof Number // false
+```
+
+综合下来Object.prototype.toString.call()方法最好用，只是要封装一下。
+
+## 3.1.2.2 基本类型(3)
+
+### 1)**Undefined类型** <a href="undefined" id="undefined"></a>
+
+Undefined类型只有一个值，那就是undefined。
+
+**实际上所有未初始化的变量的值都是undefined。它存在的目的是为了和null有所区别。**
+
+**null是指向空对象的指针，undefined指尚未初始化的变量。**
+
+> 永远不要显式地指定一个变量为undefined(书中原话)。
+
+Undefined是一个**假值**。即涉及到隐式转换为Bool时，等同于false。
+
+### 2)**Null类型**
+
+Null类型只有一个值, null。而且在JS里，会认为它和undefined等值。
+
+```javascript
+console.log(null == undefined) // true, 等值但不等型
+console.log(null === undefined) // false
+```
+
+当你想初始化一个空对象时，请使用null。
+
+与undefined一样，null也是一个假值。
+
+### 3)**Number类型**
+
+1）JS存储数据的格式 -- IEEE754
+
+关于Number类型能说的东西的确很多。首先要说的是JS里的Number是用什么格式来保存的，这会对存储的数字的精度和大小产生巨大的影响。
+
+Number使用IEEE 754 64位格式存储，于是很多东西都可以从原理推导了。
+
+**也正是IEEE 754格式，使得经典问题“0.1+0.2是否等于0.3”在JS里重现。**
+
+首先要知道计算机存储数据都是通过二进制，人类常用10进制来表示。那么会经常出现10进制转2进制问题。
+
+**整数使用短除法，小数使用递归乘法（即取小数点后的部分×2，得到的数字要是大于1，取整数部分，截断小数部分继续×2，直到结果为1。**
+
+这里贴一个自己写的10进制转2进制吧。
+
+```javascript
+function dec2bin(value) {
+  const valueInDec = typeof value === 'string' ? value : String(value)
+  const int = valueInDec.split('.')[0]
+  const float = '0.' + valueInDec.split('.')[1]
+  // 处理整数部分
+  function getInt(int) {
+    let res = ''
+    let value = Number(int)
+    while(value !== 0) {
+      res += value % 2
+      value = Math.floor(value / 2)
+    }
+    return res === '' ? '0': res
+  }
+    // 处理小数部分
+  function getFloat(float) {
+    let res = ''
+    let value = Number(float)
+    while(value !== 1) {
+      res += Math.floor(value * 2)
+      if(value * 2 > 1) {
+        value = value * 2 - 1
+      } else {
+        value = value * 2
+      }
+    }
+    return res
+  }
+  return getInt(int) + '.' + getFloat(float)
+}
+
+console.log(dec2bin(0.1)) // 0.0001100110011001100110011001100110011001100110011001101 无限循环
+```
+
+关于进制转换这里就不再赘述了，但是我们要明确一个点：不是所有的十进制数都能用2进制精确表示。例如：0.1(10) = 0.0001100110011001100110011001100110011001100110011001101...(2)，在计算机中只能取近似值存储了。
+
+先介绍下IEEE 754：
+
+[**IEEE**](https://zh.wikipedia.org/wiki/%E7%94%B5%E6%B0%94%E7%94%B5%E5%AD%90%E5%B7%A5%E7%A8%8B%E5%B8%88%E5%8D%8F%E4%BC%9A)**二进制浮点数算术标准**（**IEEE 754**）是20世纪80年代以来最广泛使用的[浮点数](https://zh.wikipedia.org/wiki/%E6%B5%AE%E9%BB%9E%E6%95%B8)运算标准。
+
+一个浮点数 (Value) 的表示其实可以这样表示：
+
+![{\displaystyle {\texttt {Value}}={\texttt {sign}}\times {\texttt {exponent}}\times {\texttt {fraction}}}](https://wikimedia.org/api/rest\_v1/media/math/render/svg/da3d1a1e1942cae4c91c1de2399863fa61f92496)
+
+也就是浮点数的**实际值**，等于[符号位](https://zh.wikipedia.org/wiki/%E7%AC%A6%E8%99%9F%E4%BD%8D)（sign bit）乘以**指数偏移值**(exponent bias)再乘以**分数值**(fraction)。
+
+![](https://pic2.zhimg.com/v2-d52ba4a039fe1942fb94f00772f1b119\_b.jpg)
+
+​ 这种格式以 64 位存储数字，其中数字（分数）存储在位 0 到 51 中，指数存储在位 52 到 62 中，符号存储在位 63 中。
+
+​ 于是在IEEE754中，无线循环小数都会面临精度舍入问题。**当0.1和 0.2这种无法用二进制精确表示的数字相加时，精度损失后相加不再等于0.3了。**(具体的二进制舍入问题就不再深入了)
+
+​ 2）特殊值和特殊值方法
+
+​ 2.1) 特殊值
+
+​ 由于内存限制，ES并表示不了世界上所有的数字。所以设置了一些特殊值, 并存储在Number对象中。
+
+|            特殊值            | 含义                                          |
+| :-----------------------: | ------------------------------------------- |
+|     Number.MAX\_VALUE     | 最大值，可存储的最大值                                 |
+|     Number.MIN\_VALUE     | 最小值                                         |
+|            NaN            | 非数字，但是依然是Number类型，可以理解为不能被表示的数字,例如0/0       |
+|          Infinity         | 正无穷大                                        |
+| Number.MAX\_SAFE\_INTEGER | 最大的安全整数，即可以精确表示的最大整数，等于2\*\*53 - 1（IEEE754) |
+| Number.MIN\_SAFE\_INTEGER | 最小的安全整数，即可以精确表示的最小负整数，等于-(2\*\*53 - 1)      |
+|       Number.EPSILON      | JS中可以表示的最小的精确浮点数，等于2\*\*(-52)               |
+
+​ 2.2）特殊值方法
+
+​ JS内部设置了一些特殊值方法来帮助你判断一个值到底是不是特殊值。
+
+| 方法                     | 含义                                                |
+| ---------------------- | ------------------------------------------------- |
+| Number.isFinite()      | 判断该数是否在JS能存储的范围内                                  |
+| Number.isInteger()     | 判断该数是否是整数                                         |
+| Number.isNaN()         | **Number下的isNaN（）比起全局的isNan（）更安全，因为它不会进行隐式类型转换。** |
+| Number.isSafeInteger() | 一个整数是否能被精确表示。范围是\[-(2\*\*53 - 1), 2\*\*53 - 1]    |
+
+​ 3）数值转换
+
+​ 一共有三种函数将非数值转换为数值：Number(), parseInt(), parseFloat()。
+
+*   **Number()**
+
+    Number()是最全能的数值转换器。
+
+    | 转换前                       | 转换后                                                      | 备注                                                                                                                           |
+    | ------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+    | false                     | 0                                                        |                                                                                                                              |
+    | true                      | 1                                                        |                                                                                                                              |
+    | 1                         | 1                                                        |                                                                                                                              |
+    | null                      | 0                                                        |                                                                                                                              |
+    | undefined                 | NaN                                                      |                                                                                                                              |
+    | "1"                       | 1                                                        |                                                                                                                              |
+    | "0123"                    | 123                                                      | 前导0会被忽略                                                                                                                      |
+    | "1.1"                     | 1.1                                                      |                                                                                                                              |
+    | "12.00"                   | 12                                                       | 浮点数的后置0会被忽略                                                                                                                  |
+    | '123e-1'                  | 12.3                                                     | 科学计数法                                                                                                                        |
+    | '0b11'                    | 3                                                        | 2进制转10进制                                                                                                                     |
+    | '0o11'                    | 9                                                        | 8进制转10进制                                                                                                                     |
+    | "0xf"                     | 15                                                       | 16进制会被转换成10进制                                                                                                                |
+    | ""                        | 0                                                        | 空串                                                                                                                           |
+    | 包含除了数字之外的字符串,或者不合法的16进制数字 | NaN                                                      | 例如“a123”,"0x23g"                                                                                                             |
+    | 对象                        | 先转换valueOf()的返回值，如果该valueOf未定义,再调用toString()方法先转换为字符串再转换 | <p>这里书上写的是如果valueOf()返回NaN，则使用toString()。<br><strong>实际测试结果并非如此，而是如果该对象（或原型链上）未定义valueOf(),则调用toString()方法后再转换。</strong></p> |
+*   **parseInt(string, base)**
+
+    > parseInt更专注于字符串是否包含数值。
+
+    parseInt特点：
+
+    1）第一个字符如果不是数值字符，加号，减号，那么立即返回NaN。
+
+    2）第二个参数base可以设置该字符串数值的基数
+
+    > 任何情况下都请设置好基数
+
+```javascript
+console.log(parseInt('012',8)) // 10 被解析为8进制
+console.log(parseInt('012')) // 12 默认基数为10
+```
+
+3）如果 `parseInt `遇到的字符不是指定 `radix `参数中的数字，**它将忽略该字符以及所有后续字符，并返回到该点为止已解析的整数值**。 `parseInt` 将数字截断为整数值。 允许前导和尾随空格。
+
+```javascript
+// 以下例子均返回15
+parseInt("0xF", 16);
+parseInt("F", 16);
+parseInt("17", 8);
+parseInt(021, 8); // 被解析为8进制
+parseInt("015", 10);   // parseInt(015, 8); 返回 13
+parseInt(15.99, 10); // 等于向下取整
+parseInt("15,123", 10); // ,123被忽略
+parseInt("FXX123", 16); // XX123被忽略
+parseInt("1111", 2);
+parseInt("15 * 3", 10); // *3被忽略
+parseInt("15e2", 10); //e2被忽略
+parseInt("15px", 10); //px被忽略
+parseInt("12", 13);
+```
+
+4）如果第一个参数不为字符串，会调用toString()方法再进行转换
+
+```javascript
+console.log(parseInt(
+{
+	toString() {
+    	return '0x123'
+  	}
+})) // 291
+```
+
+*   **parseFloat(string)**
+
+    parseFloat()跟parseInt()相比，即可以转换为浮点数了。但是parseFloat只能解析10进制小数，所以不能指定基数。
+
+    > let num1 = parseFloat("1234blue"); // 1234，按整数解析
+    >
+    > let num2 = parseFloat("0xA"); // 0
+    >
+    > let num3 = parseFloat("22.5"); // 22.5
+    >
+    > let num4 = parseFloat("22.34.5") // 22.34
+    >
+    > let num5 = parseFloat("0908.5"); // 908.5
+    >
+    > let num6 = parseFloat("3.125e7"); // 31250000
+*   **Number() 和 parseInt() 差异**
+
+    Number()实际上强大的点在于任何类型都可以进行转换，且尽量避免转换为NaN。
+
+    parseInt()强大的点在于可以指定待转换字符的基数。不能转换boolean和某些对象。
+
+4）关于Number标准库下的其他函数
+
+*   **Number.prototype.toFixed(fractionDigit)**
+
+    使用定点表示法来格式化一个数值，通俗的说即**指定某个数小数点后的位数并通过四舍五入返回（有些情况不一会四舍五入）**。
+
+```javascript
+const numObj = 12345.6789;
+
+numObj.toFixed();         // 返回 "12346"：进行四舍六入五看情况，不包括小数部分
+numObj.toFixed(1);        // 返回 "12345.7"：进行四舍六入五看情况
+
+numObj.toFixed(6);        // 返回 "12345.678900"：用0填充
+
+(1.23e+20).toFixed(2);    // 返回 "123000000000000000000.00"
+
+(1.23e-10).toFixed(2);    // 返回 "0.00"
+
+2.34.toFixed(1);          // 返回 "2.3"
+
+2.35.toFixed(1)           // 返回 '2.4'. 2.35四舍五入
+
+2.55.toFixed(1)           // 返回 '2.5'. 2.55没有四舍五入
+
+-2.34.toFixed(1);         // 返回 -2.3 （由于操作符优先级，负数不会返回字符串）
+
+(-2.34).toFixed(1);       // 返回 "-2.3" （若用括号提高优先级，则返回字符串）
+```
+
+*   **Number.prototype.toExponential (fractionDigit)**
+
+    以指数表示法返回该数值字符串表示形式，可以理解为科学计数法。
+
+```javascript
+const numObj = 77.1234;
+
+alert("numObj.toExponential() is " + numObj.toExponential()); //输出 7.71234e+1
+
+alert("numObj.toExponential(4) is " + numObj.toExponential(4)); //输出 7.7123e+1
+
+alert("numObj.toExponential(2) is " + numObj.toExponential(2)); //输出 7.71e+1
+
+alert("77.1234.toExponential() is " + 77.1234.toExponential()); //输出 7.71234e+1
+
+alert("77 .toExponential() is " + 77 .toExponential()); //输出 7.7e+1
+```
+
+*   **Number.prototype.toLocaleString(\[locales \[, options]])**
+
+    这个方法太强大了，可以直接把数字转换为特定语言环境下的表示字符串。
+
+    举个例子：
+
+```javascript
+var number = 123456.789;
+
+// 德国使用逗号作为小数分隔符，分位周期为千位
+console.log(number.toLocaleString('de-DE'));
+// → 123.456,789
+
+// 在大多数阿拉伯语国家使用阿拉伯语数字
+console.log(number.toLocaleString('ar-EG'));
+// → ١٢٣٤٥٦٫٧٨٩
+
+// 印度使用千位/拉克（十万）/克若尔（千万）分隔
+console.log(number.toLocaleString('en-IN'));
+// → 1,23,456.789
+
+// nu 扩展字段要求编号系统，e.g. 中文十进制
+console.log(number.toLocaleString('zh-Hans-CN-u-nu-hanidec'));
+// → 一二三,四五六.七八九
+
+// 当请求不支持的语言时，例如巴厘语，加入一个备用语言，比如印尼语
+console.log(number.toLocaleString(['ban', 'id']));
+// → 123.456,789
+```
+
+还可以配置option直接转换为人民币:
+
+```javascript
+const num = 122
+console.log(num.toLocaleString(undefined,{
+    currency:'CNY',
+    style:'currency'
+})) // '¥122.00'
+```
+
+还有其他的配置方法，具体可以参考MDN：[toLocalString()](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global\_Objects/Number/toLocaleString)
+
+*   **Number.prototype.toPrecision(precision)**
+
+    以指定的精度返回该数值对象的字符串表示。
+
+```javascript
+c numObj = 5.123456;
+console.log("numObj.toPrecision()  is " + numObj.toPrecision());  //输出 5.123456
+console.log("numObj.toPrecision(5) is " + numObj.toPrecision(5)); //输出 5.1235
+console.log("numObj.toPrecision(2) is " + numObj.toPrecision(2)); //输出 5.1
+console.log("numObj.toPrecision(1) is " + numObj.toPrecision(1)); //输出 5
+
+// 注意：在某些情况下会以指数表示法返回
+console.log((1234.5).toPrecision(2)); // "1.2e+3"
+```
+
+### 4)**String类型**
+
+String表示0个或多个**16位Unicode字符**序列。意味着你可以通过Unicode转义字符来表示很多你压根儿没想过可以表示的字符。例如emoji...
+
+```java
+'\u0061' // 'a'
+// 上面这种表示法只限于\u0000-\uffff的字符，在ES6中，引入了新的方式来表达双字节的字符.
+// 可以使用'\u{xxxxx}'的方式来表示双字节的unicode字符，例如emoji笑脸经测试,chrome是可以识别这种类型的（node.js没有实现。。。）
+```
+
+![](https://www.hualigs.cn/image/61764a7b8e83e.jpg)
+
+给大家推荐一个网站：[Unicode字符百科](https://unicode-table.com/cn/)，可以查询你能想到的99%的字符的Unicode码。
+
+字符串最大的特性即**不可变性**: 不可直接修改字符串的内容（这也是字符串为什么不能完全等同于数组）
+
+```javascript
+let a = '123'
+console.log(a[1]) // '2'，跟数组一样可以通过下标访问
+a[1] = 'b' // 这里直接修改不会报错
+console.log(a[1]) //'2'， 修改并未生效
+```
+
+1）字符串转换
+
+* value.toString()
+
+除了undefined和null两兄弟，基本所有的值都有toString()方法。
+
+Number类型的toString()可以实现进制转换，**只需在参数中接收一个底数参数**。
+
+```javascript
+console.log(10.toString(2)) // '1010'
+```
+
+*   String(value)
+
+    实际上就是在除了undefined,null以外，就返回toString()的结果。
+
+    如果是undefined,null,就直接返回它们值的字符串。
+*   value + “ ”
+
+    隐式类型转换, 相当于与一个空串作了拼接。
+
+```javascript
+1 + "" // '1'
+// 来两个特别点的。。。
+{} + [] // '[Object object] '
+true + {} //  'true[Object object]'
+// ???这是为啥呢？其实当两个非数值类型相加，JS会自动变成字符串拼接。先各自使用toString()方法转换为字符串，然后再拼接
+// 当1个数值类型和1个其他类型相加时,情况可能就有点迷惑了
+1 + {} // '1[Object object]' 
+1 + true // 2 数字加布尔看来会优先把true转换为1再相加
+```
+
+2）模板字符串（ES6引入）
+
+​ 可以理解为一个更高级的字符串。它可以支持：
+
+* 跨行定义字符串
+
+```javascript
+const a = `1 
+2`
+console.log(a)
+/*
+1
+2
+*/ 
+// 直接保留了换行符，普通字符串在不输入\n的情况下没法实现换行
+```
+
+* 保留内部的空格
+
+```javascript
+const b = `1 
+      2`
+console.log(b)
+/*
+1
+	2
+*/
+console.log(b.length)
+// 8 保留了空格的个数,所以模板字符串可能会引起缩进不当
+```
+
+* 支持插值（变量替换）
+
+![](https://www.hualigs.cn/image/61764d0de89cc.jpg)
+
+> 引自阮一峰《ES6标准入门》-- 4.10模板字符串
+
+​ 在模板字串串内部甚至可以直接使用函数,**模板字符串从此让字符串具有了灵活性和适应性**。
+
+*   标签函数
+
+    有一说一，**高程4上这一节写的真的是反人类**。要是新手遇到扩展符和map函数没疯，那就不合理了。
+
+    > 模板字面量也支持定义标签函数（tag function），而通过标签函数可以自定义插值行为。标签函数
+    >
+    > 会接收被插值记号分隔后的模板和对每个表达式求值的结果。
+
+    直接使用书里的例子来解释吧。
+
+```javascript
+let a = 6; 
+let b = 9; 
+function simpleTag(strings, ...expressions) { 
+ console.log(strings) // 可以理解为所有的${}表达式之外的固定字符组成的数组
+ expressions.forEach(value => console.log(value)) // 
+    console.log(expressions) // expressions是${}表达式组成的数组
+    return strings[0] + expressions.map((e, i) => `${e}${strings[i + 1]}`) 
+ .join(''); 
+// 即从strings里和expression里交叉取值再拼接，即"strings[0] + expressions[0] + strings[1] + expressions[1] + ...." 这不就是把分割好的参数又重新接回去了吗。。
+} 
+let untaggedResult = `${ a } + ${ b } = ${ a + b }`; 
+let taggedResult = simpleTag`${ a } + ${ b } = ${ a + b }`; 
+// ["", " + ", " = ", ""]  所有的${}之外的固定字符组成的数组，包括前后的空字符串,所以这个数组的长度肯定是该字符串内${}个数+1。你可以尝试数一数"abc",'ab'这两个字符串中有多少个空串
+// 6 打印所有的${}内的变量
+// 9 打印所有的${}内的变量
+// 15 打印所有的${}内的变量
+console.log(untaggedResult); // "6 + 9 = 15" 
+console.log(taggedResult); // "foobar"
+```
+
+**其实你只要理解了参数**_**strings,expressions**_**的含义,就知道如何使用函数处理这样的字符串了。**
+
+3）String常用函数，方法
+
+**前面提过，字符串最大特点是不可变性。所以这些方法都不是原地修改字符串，而是返回新字符串。**
+
+| 方法名                                              | 用法                                                                  | 备注                                                                                                                                                                                                                                                    |
+| ------------------------------------------------ | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| str.charAt(index)                                | 返回str在index的值                                                       | str\[0] 等于str.charAt(0)                                                                                                                                                                                                                               |
+| str.charCodeAt(index)                            | 返回str在index的UTF-16码点                                                | 范围在0-65535，如果超了范围，就只能返回第一个码点。                                                                                                                                                                                                                         |
+| str.codePointAt(pos) (ES6)                       | 返回值是在字符串中的给定索引的编码单元体现的数字，如果在索引处没找到元素则返回 `undefined`                 | 允许超过65535                                                                                                                                                                                                                                             |
+| str.concat(str2, \[, ...strN])                   | 在str上拼接str2等字符串                                                     | 建议使用+或者+=运算符                                                                                                                                                                                                                                          |
+| str.includes(searchString\[, position])          | 返回str中从position开始是否含有searchString                                   |                                                                                                                                                                                                                                                       |
+| str.indexOf(searchValue \[, fromIndex])          | 返回str中从fromIndex开始的searchValue的开始位置                                 | 如果没有searchValue，将会返回-1                                                                                                                                                                                                                                |
+| str.match(regexp)                                | 返回str中匹配regexp正则的部分                                                 | 如果使用g标志，则将返回与完整正则表达式匹配的所有结果，但不会返回捕获组。 如果未使用g标志，则仅返回第一个完整匹配及其相关的捕获组（`Array`）                                                                                                                                                                           |
+| str.search(regexp)                               | 返回匹配regexp的第一个索引。可以理解为简化的str.match()                                | 如果匹配成功，则 `search()` 返回正则表达式在字符串中首次匹配项的索引;否则，返回 `-1`。                                                                                                                                                                                                  |
+| str.repeat(count)                                | 即返回str拼接count次的结果                                                   | ES6                                                                                                                                                                                                                                                   |
+| str.replace(regexp\|substr, newSubStr\|function) | 将str中regexp匹配的或者等于substr的字串**替换为**newSubStr或者function的返回值，并返回替换后的新串 | string里最强的API之一，尤其是回调的引入，用的好就是艺术。具体用法可以上[MDN](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global\_Objects/String/replace#%E4%BA%A4%E6%8D%A2%E5%AD%97%E7%AC%A6%E4%B8%B2%E4%B8%AD%E7%9A%84%E4%B8%A4%E4%B8%AA%E5%8D%95%E8%AF%8D)看。 |
+| str.split(\[separator\[, limit]])                | 将str按separator分割为数组                                                 | 使用数组处理字符串成为现实                                                                                                                                                                                                                                         |
+| str.trim / str.trimEnd/ str.trimStart            | 删除前后端的空格/后端空格/前端空格                                                  | 字符串处理小秘书                                                                                                                                                                                                                                              |
+| str.slice(beginIndex\[, endIndex])               | 字符串的切片                                                              | 字符串处理小秘书                                                                                                                                                                                                                                              |
+| str.toLowerCase() / str.toUpperCase()            | 字母的大小写转换                                                            | 字符串处理小秘书                                                                                                                                                                                                                                              |
+
+### 5)Symbol类型
+
+Symbol是ES6新引入的基本类型。特点是**唯一，不可变**。
+
+\*\*为什么要引入Symbol？\*\*因为要确保对象的属性使用唯一的标识符，不会发生属性冲突。
+
+1\)初始化
+
+```javascript
+// 初始化symbol的注意事项 
+const a = Symbol() // symbol类型没有字面量，只能通过Symbol()函数产生
+const b = Symbol('symbol b') // Symbol()可以传一个description进去
+Symbol('a') === Symbol('a') // false Symbol的特点是唯一性, 就是description相同，也是两个不同的符号
+const c = new Symbol() // 报错。Symbol()不是一个构造器(constructor)
+```
+
+2\)全局注册一个符号并复用
+
+```javascript
+// Symbol.for()
+const local = Symbol('1') // 普通注册
+const global = Symbol.for('1') // 全局注册
+const global_2 = Symbol.for('1') // 再次使用
+global === global_2 // true 证明使用的是同一个Symbol
+// Symbol.keyFor() 返回查询的Symbol的key
+Symbol.keyFor(global) // '1'
+Symbol.keyFor(local) // undefined
+```
+
+3\)使用Symbol作为属性
+
+```javascript
+// 常用的属性创建
+const s1 = Symbol('foo')
+const obj = {[s1]:'1'} // 使用symbol作为key,可以直接通过obj[s1]访问
+const obj2 = {[Symbol('bar')]:'2'} // 直接使用Symbol，但是如此创建的属性因为没有保存引用，后面没法直接访问，只能通过遍历得到
+```
+
+4）常用的内置符号
+
+​ ES6采用了很多符号来表示某些通用的key。
+
+| 符号名                       | 含义                                                             | 备注                 |
+| ------------------------- | -------------------------------------------------------------- | ------------------ |
+| Symbol.asyncIterator      | 一个方法，该方法返回对象默认的 AsyncIterator。 由 for-await-of 语句使用构造函数是否有该实例   | ES2018规定的，还比较新     |
+| Symbol.hasInstance        | 一个方法，该方法决定一个构造器对象是否认可一个对象是它的实例。由 instanceof 操作符使用              |                    |
+| Symbol.isConcatSpreadable | 一个布尔值，如果是 true，则意味着对象应该用 Array.prototype.concat()打平其数组元素       |                    |
+| Symbol.iterator           | 一个方法，该方法返回对象默认的迭代器。由 for-of 语句使用                               | 常用                 |
+| Symbol.match              | 一个正则表达式方法，该方法用正则表达式去匹配字符串, 由 String.prototype.match()方法使用      |                    |
+| Symbol.replace            | 一个正则表达式方法，该方法返回字符串中匹配正则表达式的索引,由 String.prototype.search()方法使用  |                    |
+| Symbol.species            | 一个函数值，该函数作为创建派生对象的构造函数                                         |                    |
+| Symbol.split              | 一个正则表达式方法，该方法在匹配正则表达式的索引位置拆分字符串。由 String.prototype.split()方法使用 |                    |
+| Symbol.toPrimitive        | 一个方法，该方法将对象转换为相应的原始值。由 ToPrimitive 抽象操作使用                      |                    |
+| Symbol.toStringTag        | 一个字符串，该字符串用于创建对象的默认字符串描述。由内置方法 Object.prototype.toString()     | 你的自定义头像的toString方法 |
+
+### 6)Boolean类型
+
+​ Boolean类型就两个值：true，false。注意首字母小写(python是大写。。)。
+
+​ Boolean关注点就在类型转换上：
+
+![](https://z3.ax1x.com/2021/10/28/5Lmuge.png)
+
+​ 数字0和NaN会被转换成false。
+
+​ 另外要知道不论是**空对象**还是**空数组**都是true。
+
+​ 所以如果我们要利用数组是否为空作为if的条件，我们可以使用:
+
+```javascript
+const a = []
+if(a.length) {} // 不会执行
+if(a) {} // 会执行
+```
+
+### 7)Object类型
+
+​ **Object是无序键值对的集合，也是所有ES中所有对象的基类。**
+
+​ ES（**注意是ES，不是JS**）所有的对象实例都会继承Object的原型上的属性和方法:
+
+| 方法/属性Key                           | 功能                            | 备注 |
+| ---------------------------------- | ----------------------------- | -- |
+| constructor                        | 返回该实例的构造器（构造函数）               |    |
+| hasOwnProperty(propertyName)       | 返回该实例的某属性是否是它本身而不是原型链上的属性     |    |
+| isPrototypeOf(object)              | 返回该实例是否是某实例的原型                |    |
+| propertyIsEnumerable(propertyName) | 返回给定的属性是否可以使用for-in遍历         |    |
+| toLocaleString()                   | 返回该实例的本地字符串表示                 |    |
+| toString()                         | 返回该实例的字符串表示                   |    |
+| valueOf()                          | 返回该实例的原始值，通常于toString()的返回值相等 |    |
+
+​ 有意思的点在于书中提到了**Object是否会被JS中的所有对象继承**？
+
+​ **答案是否定的，因为JS是比ES更大的概念。JS中浏览器实现了DOM和BOM对象，该对象不受ES约束，所以可以不继承Object。**
+
+## 3.1.2.3 操作符(3)
+
+​ ES里的操作符不仅可以操作数值和字符串，得益于toString()和valueOf()方法的调用，甚至可以操作对象。
+
+### 1)一元操作符
+
+​ 一元操作符的**一元**是指只需要一个被操作对象即可。
+
+​ 这节的难点在于++和--的前后问题，其实这里涉及的一个问题就是变量的读和写的先后顺序问题。在《你不知道的JavaScript（上卷）》里，专门讲了JS引擎的变量查找方式，如下图。
+
+![](https://z3.ax1x.com/2021/10/29/5XvZDS.png)
+
+​ 关于RHS和LHS可以自己去看看这本书的第一章。下面举例来说明下。
+
+```javascript
+const b = 1
+const a = b // 这里赋值号左边为LHS，右边为RHS。LHS可以简单理解为找到a这个变量的位置(以方便写),RHS可以理解找到b这个变量的位置(以方便读)
+let c = 1
+let d = a + c++ // 2, c++在这里就是先进行了一次RHS，值为1。然后a进行一次RHS，d进行一次LHS。最后c再进行LHS，自增1。 所以++在后面即代表整体赋值结束后最后再进行自增
+let e = a + ++c // 4，++c在这里RHS和LHS一起进行，所以先自增为3。再整体进行加减。所以++在前面就代表在整体f前先进行自增
+```
+
+### 2)位操作符
+
+​ 这一节是第四版新加的内容，也是大家很不熟悉或者很少用的内容。但是位运算相当强大，除了跑的快以外，还能解决相当多的算法问题。所以建议大家好好学习这一节。
+
+​ 位运算的过程：将IEEE 754的64位格式数字转换为32位表示，然后再进行位操作，最后再转成64位存储。所以位运算是在32位的基础上进行的。
+
+​ 32位有符号整数：从右往左分别是由第0位到第30位，第31位为符号位。如果为负数则第31位为1，反之为0。
+
+​ 位运算总共有7种，需要大家记住：
+
+```javascript
+// 1. ~ 按位非 即每一位取反
+// 2. & 按位与 只在1,1取1
+// 3. | 按位或 只在0,0取0
+// 4. ^ 按位异或 只在1，0或0, 1取1
+// 5. << n 左移 看箭头方向，左移n位, 右边补0	
+// 6. >> n 有符号右移 看箭头方向，有符号右移n位，左边将符号位一直补齐 
+// 7. >>> n 无符号右移 无符号右移n位，左边补0
+```
+
+​ 看到这里，肯定有人会问了。这位运算到底能干嘛？我们可以来看几个例子(要是面试被问到你就可以装逼了)
+
+```javascript
+// 1. 不使用%和/判断奇偶
+if(n & 1 === 1) {
+  return `${n}是奇数`
+} else {
+  return `${n}是偶数`
+}
+// 因为2进制转10进制除了最低位是（2 ** 0） *（1或者0）, 其余全是偶数相加，所以最低位决定是否是偶数和奇数
+```
+
+```javascript
+// 2. 不使用第三个数或者解构赋值来进行数值交换
+// 交换x,y的值
+x = x ^ y
+y = x ^ y
+x = x ^ y
+/* 自身异或得0，任何数与0异或得自身。
+异或支持交换律和结合律
+第二步y = x ^ y = x ^ y ^y = x ^ (y ^ y) = x ^ 0 = x 
+第三步x = x ^ y = x ^ x ^ y = x ^ y ^ x ^ y ^ y = (x ^ x) ^ ( y ^ y ^ y) = 0 ^ (y ^ y) ^ y = 0 ^ 0 ^ y = 0 ^ y = y 
+*/
+```
+
+```javascript
+// 3.找出没有重复的数，例如[1,1,2,2,3,3,4,4,5],要求时间和空间都是O(1)
+// 直接连起来异或即可
+return [1,1,2,2,3,3,4,4,5].reduce((pre,cur)=> pre ^ cur) // 5
+// 因为1^1 = 0, 易得最后化为0 ^ 5 = 5
+```
+
+```javascript
+// 4.不使用*和Math.pow()和**来求2的n次幂
+function getPowOf2(n){
+	return 1 << n
+}
+// 即使用1左移n位即可，因为左移后除了最高位为1，其余位全为0.则返回值res = 2 ** (n) * 1  + 2 ** (n-1) * 0  +  ... + 2 ** 0 * 0 = 2 ** n
+```
+
+### 3)布尔操作符
+
+​ 其实布尔操作符的难点在于记住JS里的真值(truthy)和假值(falsy)。
+
+​ 只需记住所有的假值，其余的都是真值。共有6个值：
+
+```javascript
+false 
+0,-0,0n // 0n 是bigint
+'',``,""
+NaN
+undefined
+null
+// 所以空对象和空数组空函数空集合啥的都是truthy, 真正的空对象是null
+```
+
+​ 布尔操作符有3个需要关注的点：
+
+​ 1.隐式类型转换 ： 加!会转换为相反的布尔值，!!转换为自身对应的真值或假值。
+
+​ 2.短路原则：如果当前从左到右运算可以直接返回值，则不再判断后面的值。例如：
+
+```javascript
+const a =  1 || 2 || 3 // 1  1为真值可以直接返回，2,3被忽略
+const b =  1 && 0 && 3 // 0  0为假值可以直接返回，3被忽略
+```
+
+​ 3.备份原则：如果直到最后一个元素才能返回结果，那么直接返回最后元素（相当于备份）
+
+```javascript
+const a = 0 || undefined || null // 直接返回null
+const c = true && 1 && d // 直接返回d
+// 所以有时候我们会给某个变量指定备份值
+const bar = a || 1 // 如果a为假值，那么bar = 1.如果a为真值，那么bar = a。1这里就是一个备份
+```
+
+### 4)加、减、乘、除、取模、指数操作符
+
+​ 这几节大部分篇幅其实都在讲数学里的无穷大和无穷小的计算，这些内容就不重复了。
+
+* 加法中的类型转换
+
+​ 但是值得一提的是"+"操作符，该操作符在有至少有一个操作符不是数字（例如NaN,字符串，对象等）的时候，会进行隐式类型转换，大多数情况下会输出字符串。
+
+```javascript
+1 + 2 // 3
+1 + '2' // 12 一个数字加一个字符串，优先输出字符串而不是把字符串转换为数字再相加,看来字符串的优先级更高
+1 + true // 2 一个数字加一个布尔值，会把布尔值转化为数字再相加。数字的优先级大于布尔值
+'1' + true // 1true 优先级具有传递性，必然字符串遇到布尔值会将布尔值变成字符串
+1 + {} // 1[Object object], 这个前面提到过，自动调用了Object.prototype.toString()
+null + 1 // 1，看来数字的优先级大于null
+null + true // 1, 这里看来null和true都被转成了数字
+null + {} // null[Object object]
+1 + [] // '1' 调用了Array.prototype.toString()
+1 + function(){} // '1function(){}' 调用了Function.prototype.toString()
+```
+
+​ 经过上面的实验，可以得出结论：**优先级上-- 字符串>数字>布尔值 = null。不同优先级相加会把小的向大的进行转换。如果任何值与对象（包括数组，函数等）, 会调用他们的toString()方法再做拼接,最后输出字符串。**
+
+*   减法操作的类型转换
+
+    减法也有类型转换，但是因为本身不能被当作拼接符号了，所以在减法中所有非数字类型都会优先被转换为数字再进行加减，最后会输出数字或者NaN。
+*   指数操作符
+
+    ES5里只有Math.pow(x,y)，ES6引入了\*\*符号表示乘方。
+
+### 5)关系操作符
+
+​ 这一节主要分析<,>,<=,>=符号的原理。其实还是**非数值类型比较**的问题。
+
+​ 其实比大小最直接的方式就是比数值的大小，所以关系操作符会优先把不是数字的转换成数字。但有些值没法转换成数字，例如以下情况:
+
+```javascript
+'a' < 1 // false 'a'无法转成数字，则相当于NaN < 1  
+'1' < '2' // true 两边都可以转数字
+'a' < 'b' // true 当两边都是字符串时，那么会逐位比较unicode值大小直到返回结果,即返回'a'.codePointAt() < 'b'.codePointAt()
+'a' < {} // false 因为{}会被转为'[Object object]'，有'a'.codePointAt() = 97 > '['.codePointAt() = 91 
+```
+
+### 6)相等操作符
+
+​ 这节主要是讲 == 和 ===, 以及!= 和!==。==可以简单理解先转类型再比较，===则必须是等值且等型。
+
+​ 所以==会导致一些迷惑的行为, 建议在任何时候都不要使用== 和!=。
+
+```javascript
+null == undefined // true
+NaN == NaN // true，全JS唯一不跟自己相等的值
+'5' == 5 // true
+Infinity == Infinity // true
+```
+
+### 7)条件操作符
+
+​ 条件操作符 "?" 是JS里唯一的三元操作符(n元操作符就是指需要n个算子的操作符，1元操作符如++a, -b,2元如a\*b)
+
+```javascript
+// 条件操作符的公式： variable = boolean_expression ? if_true_return_this : if_false_return_this
+// 主要避免了我们有时候为了赋值写很麻烦的if/else
+if(boolean_expression) {
+	return a
+} else {
+	return b
+}
+// 等于 boolean_expression ? a : b
+// 介绍一个应用
+// 使用Map统计一个字符串里字符串出现的次数, 我们可以使用 "?" 操作符
+const map = new Map
+const String = 'aabbca'
+for(let char of String) {
+    map.set(char,map.has(char) ? map.get(char) + 1 : 1) // 有该字符则+1，没有就置1
+}
+// 还有一种方法
+for(let char of String) {
+    map.set(char, map.get(char) + 1 || 1) // 使用了我们的备份原则,如果map没有char，则map.get(char) + 1 会返回NaN。另外map.get(char) + 1也不会为0，所以还是适应性很好的~
+}
+```
+
+### 8) 赋值操作符
+
+​ 除了最常用的=外，介绍了各种复合赋值如+=,-=.....
+
+​ **其实这种写法主要是提供便利，使用它们不会提升性能。**
+
+### 9) 逗号操作符
+
+​ 其实JS里也能批量声明变量：
+
+```javascript
+const a = 1, b = 2, c = 3
+```
+
+## 3.1.2.4 语句(3)
+
+1\)if 注意if()括号里的隐式类型转换,即前面提到的truthy和falsy值。
+
+2\)do-while 实际上用的不多，先用一次再进入循环实际上有时候不利于维护。
+
+3\)while 还是跟if一样，注意隐式类型转换。
+
+4\)for() 用的比较多的迭代语句，通常用于类数组对象的遍历。
+
+```javascript
+// 如何用for实现while? 
+for(;boolean_statements;) {
+}
+```
+
+4\)for-in语句 用于遍历对象的所有的可遍历的非symbol Key
+
+5\)for-of语句 用于遍历可迭代对象的元素: 在ES6引入了可迭代的概念，即配置了迭代器的对象。所以不光是数组，有的对象都可以用for-of迭代。
+
+**在ES6里默认可以使用for-of的对象是Array,Set,Map,String,类数组对象arguments,Nodelist(DOM**)等。
+
+6\)for-await-of(ES2018) 遍历异步可迭代对象以及同步可迭代对象。你要遍历的对象抛出的迭代值是异步值那么就需要使用for-await-of。
+
+```javascript
+// 使用方法 for await(const x of async_iterable_Obj)
+async function* asyncGenerator() {
+  const i = 0;
+  while (i < 5) {
+    yield i++;
+  }
+}
+async function() {
+  for await (num of asyncGenerator()) {
+    console.log(num)
+  }
+// 0 1 2 3 4， 现在看不懂async的没有关系。
+```
+
+7\)标签语句 通常是给循环加一个名字，特别是双层循环的外层。因为双层循环的break之会终结最内层循环。
+
+最佳实践是多层循环最好都给一个标签，最佳实践的最佳实践是最好不要三层及以上循环。
+
+在算法题里通常用于更好地剪枝。
+
+```javascript
+outer: for(let i = 0; i < 5; i++) {
+	for(let j = 0; j < 3; j++) {
+		if(j === 1) {
+			break outer // 第一次循环到j = 1时, 外层i的循环直接结束
+		}
+        console.log([i,j]) //  [0,0] [0,1]
+	}
+}
+// 如果不使用outer，那么结果是 [0,0] [1,0] [2,0] [3,0] [4,0]
+```
+
+8\)break和continue 这两兄弟实际上是循环时很常用的关键字，要点只有一个：在不使用标签语句的情况下，只对最近一层循环生效。
+
+​ 另外break是switch里基本必用的，就像油条必须搭配豆浆一样。
+
+9\)实际上with相当于你指定了this，但是难于调试。所以建议不使用。
+
+10\)switch switch建议你首先买一套马里奥全家桶...（开个玩笑）。
+
+​ switch你需要主要的是如果你不想在进入某个case过后继续执行后面的case，那么你需要加入break。
+
+## 3.1.2.5 函数(2)
+
+​ 这一节没有探寻函数内部的多种属性例如arguments,caller等。只是告诉你如何创建一个基本的函数，详细的在第10章。
+
+​ 另外需要你弄清楚的是JS里的函数依然是一个对象，对象就会有自己的属性，也会继承其原型链上的属性和方法。
+
+​ 通过浏览器调试我们对函数能有一个基本的了解。
+
+​
+
+![](https://z3.ax1x.com/2021/11/10/IU4G90.png)
+
+​
+
+```javascript
+/*
+我们定义了一个函数b，这个b有4个属性：arguments,caller,length,name
+arguments: 一个函数在调用时实际传进来的参数，是一个类数组对象
+caller: arguments的调用对象
+length: arguments定义时的形参个数
+name: 这个函数的名字，注意不是指向这个函数的变量名。如果你不显式设置，那么name会被设置为保存它地址的变量名。所以如果一个函数既不设置名字，又不设置变量保存它，那么名字会是undefined。
+被[[]]包裹的属性实际上是不能被直接访问的私有属性。
+
+prototype和[[prototype]]分别对应了b作为构造函数和对象时所指向的原型,现在不懂也无所谓。
+[[scopes]] 实际上很重要，是指b在创建时，它对应的作用域也被保存下来。由内层开始，直到保存到顶级对象global(chorme里实例化为window)。
+*/
+function b(){}
+b.arguments instanceof Array // false arguments不是数组，只是一个类数组
+const a = b 
+b.name // b a只是保存该函数地址的变量
+setTimeout(function(){},0) // 里面这个函数name为undefined
+b.name = '123' // b.name依然是b,证明函数的name属性是只读的
+```
+
+## _本章需要你掌握的问题_
+
+1. _说一说ES6中的数据类型_
+2. _symbol是干嘛用的？_
+3. 请说1个ES6里基于symbol定义的公共属性?
+4. _var/const/let的异同，为什么要引入const/let（至少3条）？_
+5. _undefined和null的区别_
+6. _BigInt是什么？_
+7. _JS中的类型判断，请说出3种方法，哪种方法最好（请手写实现 一个可以精确返回数据类型的函数）？_
+8. IEEE754的存储法则？
+9. _parseInt()和Number()的区别?_
+10. _0.1 + 0.2 为什么不等于0.3?_
+11. _ES中最大的精确浮点数和最小的精确浮点数是如何计算的？_
+12. _使用Number()和parseInt()转换对象的过程_
+13. _模板字符串标签函数的参数？_
+14. _非字符串的拼接原理？例如true + 1， true + {}_
+15. _ES中每个对象都包含的属性和方法（至少说5个）？_
+16. JS中每个对象一定要继承Object的原型吗（要是不懂原型可以暂时忽略）？
+17. \++a 和a++的区别在哪里？
+18. LHS和RHS？
+19. 说一说ES里的位操作符有哪些？有符号右移和无符号左移原理上的区别？
+20. 位操作符有啥用？列举几个简单利用位操作简化计算的例子？
+21. 说说js里的真值(truthy)和假值(falsy)？
+22. 1 + true ? '1' + true ? 1 + function(){}?
+23. 'a' < 'A' ?
+24. JS里唯一与自身不等的值?
+25. for-await-of的用法?
+26. 一个函数初始有哪些属性?
+27. 进阶：请实现一个可以精确判断数据类型的函数getType()
+28. 进阶: 请实现一个10进制到2进制的转换器
