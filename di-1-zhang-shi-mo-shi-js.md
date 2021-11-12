@@ -37,5 +37,3 @@ description: 'KEYWORDS: JS的诞生，TC39, ES，DOM，BOM'
 3. _JS是浏览器的专属语言吗？_
 
 ***
-
-##
