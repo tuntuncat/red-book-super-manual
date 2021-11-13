@@ -1,5 +1,5 @@
 ---
-description: var/let/const， 数据类型， 流控制语句， 理解函数
+description: 'KEYWORDS: var/let/const， 数据类型， 流控制语句， 理解函数'
 ---
 
 # 第3章 语言基础
@@ -37,6 +37,8 @@ console.log(你好) // hello
 ​ 实际上我们声明一个变量时，它的context（上下文）也被保存下来, 换句话说，**变量只有放在特定的上下文中才能唯一确定**。在ES6之前，只有全局上下文和函数上下文。ES6引入了块级上下文，从而解决了以前使用var声明变量时的一些遗留问题。
 
 ​ 有时候我们也用**作用域来代指上下文**。
+
+关于作用域的更多信息，请看第4章：[#4.2-zhi-hang-shang-xia-wen-he-zuo-yong-yu-lian-3](di-4-zhang-bian-liang-zuo-yong-yu-yu-nei-cun.md#4.2-zhi-hang-shang-xia-wen-he-zuo-yong-yu-lian-3 "mention")
 
 ### 1)var
 

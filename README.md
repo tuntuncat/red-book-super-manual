@@ -1,5 +1,5 @@
 ---
-description: '- 基于《JavaScript高级程序设计(第四版)》的读书笔记'
+description: '- 与其感慨路难行，不如马上出发'
 ---
 
 # 第0章 自序
