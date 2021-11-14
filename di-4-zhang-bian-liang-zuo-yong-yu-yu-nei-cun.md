@@ -204,7 +204,7 @@ function f(){
 function Person(name){
     this.name = name
 }
-Person.prototype.constructor = Person // 此时你会发现Person的prototype属性引用了它的
+Person.prototype.constructor === Person // true  此时你会发现Person的prototype属性引用了它的
 // 原型对象，它的原型对象的constructor属性引用了Person。即Person和它的原型对象在互相引用。
 // 要是你还不清楚什么是prototype和constructor，你只需把它们分别替换为a和b即可。
 // 这种互相引用的情况在书里还举了DOM里的例子，所以引用计数现在基本已经不被使用了。
