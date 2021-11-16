@@ -30,9 +30,17 @@ description: '- 与其感慨路难行，不如马上出发'
 
 ​ 另外本书很多资料参考于或检索于:
 
+{% embed url="https://tc39.es/ecma262#sec-scope" %}
+ES6官方文档
+{% endembed %}
+
 {% embed url="https://developer.mozilla.org/zh-CN" %}
+MDN
+{% endembed %}
 
 {% embed url="https://es6.ruanyifeng.com" %}
+written by 阮一峰
+{% endembed %}
 
 {% embed url="https://www.zhihu.com" %}
 知乎
