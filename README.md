@@ -1,5 +1,7 @@
 ---
 description: '- 与其感慨路难行，不如马上出发'
+cover: .gitbook/assets/javascript-736400-1.png
+coverY: 346.52002542911634
 ---
 
 # 第0章 自序

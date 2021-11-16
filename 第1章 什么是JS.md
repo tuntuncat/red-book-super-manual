@@ -1,5 +1,7 @@
 ---
 description: 'KEYWORDS: JS的诞生，TC39, ES，DOM，BOM'
+cover: .gitbook/assets/javascript-736400-1.png
+coverY: 0
 ---
 
 # 第1章 什么是JS
