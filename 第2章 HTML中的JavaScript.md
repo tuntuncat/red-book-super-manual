@@ -1,5 +1,5 @@
 ---
-description: 'KEYWORDS: <script>元素, <script>属性, 阻塞，defer/async'
+description: 'KEYWORDS: <script>元素，<script>属性，阻塞，defer/async'
 cover: .gitbook/assets/javascript-736400-1.png
 coverY: 0
 ---
