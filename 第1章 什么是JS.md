@@ -14,11 +14,11 @@ coverY: 0
 
 > **JavaScript**（通常缩写为**JS**）是一种[高级](https://zh.wikipedia.org/wiki/%E9%AB%98%E7%BA%A7%E8%AF%AD%E8%A8%80)的、[解释型](https://zh.wikipedia.org/wiki/%E7%9B%B4%E8%AD%AF%E8%AA%9E%E8%A8%80)的[编程语言](https://zh.wikipedia.org/wiki/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80)[\[8\]](https://zh.wikipedia.org/wiki/JavaScript#cite\_note-:0-8)。JavaScript是一门[基于原型](https://zh.wikipedia.org/wiki/%E5%9F%BA%E4%BA%8E%E5%8E%9F%E5%9E%8B%E7%BC%96%E7%A8%8B)、[头等函数](https://zh.wikipedia.org/wiki/%E5%A4%B4%E7%AD%89%E5%87%BD%E6%95%B0)的语言[\[9\]](https://zh.wikipedia.org/wiki/JavaScript#cite\_note-:1-9)，是一门多范式的语言，它支持[面向对象](https://zh.wikipedia.org/wiki/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1)程序设计，[指令式编程](https://zh.wikipedia.org/wiki/%E6%8C%87%E4%BB%A4%E5%BC%8F%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80)，以及[函数式编程](https://zh.wikipedia.org/wiki/%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80)。它提供语法来操控文本、[数组](https://zh.wikipedia.org/wiki/%E6%95%B0%E7%BB%84)、日期以及[正则表达式](https://zh.wikipedia.org/wiki/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F)等，不支持[I/O](https://zh.wikipedia.org/wiki/I/O)，比如网络、存储和图形等，但这些都可以由它的宿主环境提供支持。它已经由ECMA（欧洲电脑制造商协会）通过[ECMAScript](https://zh.wikipedia.org/wiki/ECMAScript)实现语言的标准化[\[8\]](https://zh.wikipedia.org/wiki/JavaScript#cite\_note-:0-8)。它被世界上的绝大多数网站所使用，也被世界主流[浏览器](https://zh.wikipedia.org/wiki/%E6%B5%8F%E8%A7%88%E5%99%A8)（[Chrome](https://zh.wikipedia.org/wiki/Google\_Chrome)、[IE](https://zh.wikipedia.org/wiki/Internet\_Explorer)、[Firefox](https://zh.wikipedia.org/wiki/Firefox)、[Safari](https://zh.wikipedia.org/wiki/Safari)、[Opera](https://zh.wikipedia.org/wiki/Opera%E9%9B%BB%E8%85%A6%E7%80%8F%E8%A6%BD%E5%99%A8)）支持。
 
-里面提到了解释型，基于**原型(prototype)，头等函数(first-class function)，支持面向对象，函数式，指令式编程**。由ECMA制定了标准，被主流浏览器支持。
+里面提到了解释型，基于**原型(prototype)，头等函数(first-class function)，支持面向对象，函数式，多范式编程**。由ECMA制定了标准，被主流浏览器支持。
 
-这些点才是我们在正式学习JS之前所需要知道的精髓：**JS的面向对象特性实现于原型链，JS受益于头等函数特性，对函数式编程的支持极好(回调函数，闭包，高阶函数如Array.prototype.map()都是函数式编程的应用)**。而且是一门主要运行在浏览器的语言。
+这些点才是我们在正式学习JS之前所需要知道的精髓：**JS的面向对象特性由原型链实现，JS受益于头等函数特性，对函数式编程的支持极好(回调函数，闭包，高阶函数如Array.prototype.map()都是函数式编程的应用)**。而且是一门主要运行在浏览器的语言。
 
-我们下次再介绍JS的时候，除了告诉别人JS是一门脚本语言以外，再说一说它自己的特点呢\~
+我们下次再介绍JS的时候，除了告诉别人JS是一门脚本语言以外，可以再说一说它自己的特点呢\~
 
 ## 1.1 JS的诞生(1)
 
